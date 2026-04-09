@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: cabana-hub-rh
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    disk:
+      name: cabana-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: /data
+      - key: HUB_PASSWORD
+        generateValue: false
+        # Defina manualmente no painel do Render após criar o serviço
