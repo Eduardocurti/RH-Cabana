@@ -1202,6 +1202,7 @@ function showView(name, el) {
 // ─── INIT ────────────────────────────────────────
 function initApp() {
   loadState();
+  loadHistoricoRem();
   renderDashboard();
   populateDeptoFilter();
   updatePendingBadge();
@@ -1678,6 +1679,7 @@ function openDetail(mat) {
         ${row('Conta', p.conta)}
       </div>
     </div>
+    ${renderHistoricoRemuneracao(mat)}
   `;
 
   document.getElementById('modal-footer').innerHTML = `
@@ -1751,7 +1753,16 @@ function openEdit(mat) {
     <div class="form-section">
       <div class="form-section-title"><span>💰</span> Financeiro</div>
       <div class="form-grid">
-        ${inp('remuneracao','Remuneração (R$)', p.remuneracao, 'number')}
+        <div class="form-group">
+          <label class="form-label" for="edit-remuneracao">Remuneração (R$)</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input class="form-input" id="edit-remuneracao" type="number" value="${(p.remuneracao||'').replace(/"/g,'&quot;')}" style="flex:1;">
+            <button type="button" class="btn-secondary" style="padding:8px 12px;white-space:nowrap;flex-shrink:0;display:inline-flex;align-items:center;gap:5px;font-size:12px;" onclick="abrirModalRemuneracao('${mat}')">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Registrar Alteração
+            </button>
+          </div>
+        </div>
         ${inp('planoDependente','Plano de Saúde Dep.', p.planoDependente)}
         ${inp('vr','VR', p.vr)}
         ${inp('vc','VC', p.vc)}
@@ -2319,6 +2330,202 @@ function deletePeriodo(mat, id) {
   renderFeriasOverview();
 }
 
+
+
+// ─── HISTÓRICO DE REMUNERAÇÃO ────────────────────
+let historicoRemuneracao = {}; // mat -> [{id,data,de,para,motivo}]
+
+function getHistoricoRem(mat) {
+  return historicoRemuneracao[mat] || [];
+}
+
+function saveHistoricoRem(mat) {
+  try { localStorage.setItem('cabana_remhist_'+mat, JSON.stringify(historicoRemuneracao[mat]||[])); } catch(e){}
+}
+
+function loadHistoricoRem() {
+  // Load from localStorage for all prestadores
+  pjData.forEach(p => {
+    try {
+      const saved = localStorage.getItem('cabana_remhist_'+p.matricula);
+      if(saved) historicoRemuneracao[p.matricula] = JSON.parse(saved);
+    } catch(e){}
+  });
+}
+
+function renderHistoricoRemuneracao(mat) {
+  const hist = getHistoricoRem(mat);
+  if(!hist.length) return `
+    <div class="form-section" style="margin-top:4px;">
+      <div class="form-section-title"><span>📈</span> Histórico de Movimentação de Remuneração</div>
+      <div style="padding:16px;text-align:center;color:var(--gray-400);font-size:13px;background:var(--gray-50);border-radius:8px;">
+        Nenhuma alteração de remuneração registrada ainda.
+      </div>
+    </div>`;
+
+  const sorted = [...hist].sort((a,b)=>(parseDate(b.data)||0)-(parseDate(a.data)||0));
+  const rows = sorted.map(h => {
+    const de = h.de ? 'R$ '+parseFloat(h.de).toLocaleString('pt-BR',{minimumFractionDigits:2}) : '—';
+    const para = h.para ? 'R$ '+parseFloat(h.para).toLocaleString('pt-BR',{minimumFractionDigits:2}) : '—';
+    const diff = h.de && h.para ? parseFloat(h.para)-parseFloat(h.de) : null;
+    const diffColor = diff===null?'':'background:'+( diff>0?'#e8f5e9;color:#2e7d32':diff<0?'#fde8e8;color:var(--danger)':'var(--gray-100);color:var(--gray-600)')+';';
+    const diffSign = diff===null?'':(diff>0?'▲':diff<0?'▼':'=');
+    const diffBadge = diff !== null
+      ? '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;'+diffColor+'">'
+        + diffSign+' R$ '+Math.abs(diff).toLocaleString('pt-BR',{minimumFractionDigits:2})
+        + '</span>'
+      : '';
+    return `<tr>
+      <td style="font-size:13px;font-weight:600;white-space:nowrap;">${h.data}</td>
+      <td style="font-size:12px;color:var(--gray-500);">${de}</td>
+      <td style="font-size:12px;">
+        <span style="font-weight:700;color:var(--green-dark);">${para}</span>
+      </td>
+      <td>${diffBadge}</td>
+      <td style="font-size:12px;color:var(--gray-600);max-width:200px;">${h.motivo||'—'}</td>
+      <td><button class="btn-danger" style="padding:3px 8px;font-size:11px;" onclick="excluirHistoricoRem('${mat}','${h.id}')">✕</button></td>
+    </tr>`;
+  }).join('');
+
+  return `
+    <div class="form-section" style="margin-top:4px;">
+      <div class="form-section-title"><span>📈</span> Histórico de Movimentação de Remuneração</div>
+      <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--gray-200);">
+        <table style="margin:0;">
+          <thead>
+            <tr>
+              <th style="background:var(--gray-50);">Data</th>
+              <th style="background:var(--gray-50);">De</th>
+              <th style="background:var(--gray-50);">Para</th>
+              <th style="background:var(--gray-50);">Variação</th>
+              <th style="background:var(--gray-50);">Motivo</th>
+              <th style="background:var(--gray-50);"></th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function excluirHistoricoRem(mat, id) {
+  if(!historicoRemuneracao[mat]) return;
+  historicoRemuneracao[mat] = historicoRemuneracao[mat].filter(h=>h.id!==id);
+  saveHistoricoRem(mat);
+  showToast('Registro removido.','');
+  openDetail(mat); // re-render detail
+}
+
+function abrirModalRemuneracao(mat) {
+  const p = pjData.find(x=>x.matricula===mat);
+  if(!p) return;
+  const remAtual = parseFloat(p.remuneracao)||0;
+  const remFmt = remAtual ? 'R$ '+remAtual.toLocaleString('pt-BR',{minimumFractionDigits:2}) : '—';
+  const hoje = (() => { const d=new Date(); return ('0'+d.getDate()).slice(-2)+'/'+ ('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear(); })();
+
+  // Create a floating dialog overlay (inside the edit modal)
+  const overlay = document.createElement('div');
+  overlay.id = 'rem-dialog-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  overlay.innerHTML = `
+    <div style="background:white;border-radius:16px;padding:28px;width:100%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,.25);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div>
+          <h3 style="margin:0;font-size:16px;font-weight:700;color:var(--gray-800);">📈 Registrar Alteração de Remuneração</h3>
+          <p style="margin:4px 0 0;font-size:12px;color:var(--gray-400);">${p.nome}</p>
+        </div>
+        <button onclick="document.getElementById('rem-dialog-overlay').remove()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--gray-400);line-height:1;padding:4px;">✕</button>
+      </div>
+
+      <div style="background:var(--gray-50);border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:12px;color:var(--gray-500);">Remuneração atual</span>
+        <span style="font-size:16px;font-weight:800;color:var(--green-dark);">${remFmt}</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div class="form-group">
+          <label class="form-label">Nova Remuneração (R$) *</label>
+          <input class="form-input" id="rem-novo-valor" type="number" placeholder="0.00" oninput="remCalcDiff('${remAtual}')">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Data da Mudança *</label>
+          <input class="form-input" id="rem-data" type="text" value="${hoje}" placeholder="DD/MM/AAAA">
+        </div>
+      </div>
+      <div id="rem-diff-preview" style="display:none;padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:13px;font-weight:600;"></div>
+      <div class="form-group" style="margin-bottom:20px;">
+        <label class="form-label">Motivo da Alteração *</label>
+        <select class="form-select" id="rem-motivo-sel" onchange="remToggleMotivo()">
+          <option value="">Selecione...</option>
+          <option value="Reajuste anual IPCA">Reajuste anual IPCA</option>
+          <option value="Promoção / Aumento por mérito">Promoção / Aumento por mérito</option>
+          <option value="Revisão salarial">Revisão salarial</option>
+          <option value="Acordo comercial">Acordo comercial</option>
+          <option value="Ajuste de função">Ajuste de função</option>
+          <option value="outro">Outro (digitar)...</option>
+        </select>
+        <input class="form-input" id="rem-motivo-texto" type="text" placeholder="Descreva o motivo..." style="margin-top:8px;display:none;">
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button class="btn-secondary" onclick="document.getElementById('rem-dialog-overlay').remove()">Cancelar</button>
+        <button class="btn-primary" onclick="salvarAlteracaoRemuneracao('${mat}','${remAtual}')">💾 Salvar Alteração</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+function remToggleMotivo() {
+  const sel = document.getElementById('rem-motivo-sel');
+  const txt = document.getElementById('rem-motivo-texto');
+  if(!sel||!txt) return;
+  txt.style.display = sel.value==='outro' ? '' : 'none';
+  if(sel.value!=='outro') txt.value='';
+}
+
+function remCalcDiff(remAtual) {
+  const novo = parseFloat(document.getElementById('rem-novo-valor')?.value)||0;
+  const de = parseFloat(remAtual)||0;
+  const preview = document.getElementById('rem-diff-preview');
+  if(!preview||!novo) { if(preview) preview.style.display='none'; return; }
+  const diff = novo - de;
+  const pct = de ? ((diff/de)*100).toFixed(1) : '—';
+  const cor = diff>0 ? 'background:#e8f5e9;color:#2e7d32;' : diff<0 ? 'background:#fde8e8;color:var(--danger);' : 'background:var(--gray-100);color:var(--gray-600);';
+  preview.style.cssText = 'display:block;padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:13px;font-weight:600;'+cor;
+  const sinal = diff>=0 ? '▲ +' : '▼ ';
+  const pctStr = diff>=0 ? '+'+pct : pct;
+  preview.innerHTML = sinal+'R$ '+Math.abs(diff).toLocaleString('pt-BR',{minimumFractionDigits:2})+' ('+pctStr+'%) — De R$ '+de.toLocaleString('pt-BR',{minimumFractionDigits:2})+' para R$ '+novo.toLocaleString('pt-BR',{minimumFractionDigits:2});
+}
+
+function salvarAlteracaoRemuneracao(mat, remAnterior) {
+  const novoValor = document.getElementById('rem-novo-valor')?.value?.trim();
+  const data = document.getElementById('rem-data')?.value?.trim();
+  const motivoSel = document.getElementById('rem-motivo-sel')?.value;
+  const motivoTxt = document.getElementById('rem-motivo-texto')?.value?.trim();
+  const motivo = motivoSel==='outro' ? motivoTxt : motivoSel;
+
+  if(!novoValor || parseFloat(novoValor)<=0) { showToast('⚠️ Informe o novo valor da remuneração.','error'); return; }
+  if(!data) { showToast('⚠️ Informe a data da mudança.','error'); return; }
+  if(!motivo) { showToast('⚠️ Informe o motivo da alteração.','error'); return; }
+
+  // Register in history
+  if(!historicoRemuneracao[mat]) historicoRemuneracao[mat]=[];
+  historicoRemuneracao[mat].push({
+    id: Date.now().toString(),
+    data,
+    de: remAnterior,
+    para: novoValor,
+    motivo
+  });
+  saveHistoricoRem(mat);
+
+  // Update the edit-remuneracao field in the form
+  const editField = document.getElementById('edit-remuneracao');
+  if(editField) editField.value = novoValor;
+
+  // Close dialog
+  document.getElementById('rem-dialog-overlay')?.remove();
+  showToast('✓ Alteração registrada! Salve o cadastro para confirmar.','success');
+}
 
 // ─── LICENÇA MÉDICA ──────────────────────────────
 let licencaData = {}; // matricula -> { periodos: [{id,inicio,fim,dias,obs,tipo}] }
