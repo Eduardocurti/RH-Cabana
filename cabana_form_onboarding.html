@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cabana Burger · Cadastro de Prestador PJ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green:      #54a045;
+    --green-dark: #3a7a2e;
+    --green-pale: #f0f7ee;
+    --green-light:#a8d5a2;
+    --gray-50:  #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-700: #374151;
+    --gray-900: #111827;
+    --danger:   #dc2626;
+    --shadow:   0 4px 24px rgba(0,0,0,.08);
+    --radius:   12px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #f0f4ed;
+    min-height: 100vh;
+    color: var(--gray-900);
+  }
+
+  /* ── HERO HEADER ── */
+  .hero {
+    background: var(--green-dark);
+    padding: 40px 24px 60px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      -45deg, transparent, transparent 20px,
+      rgba(255,255,255,.03) 20px, rgba(255,255,255,.03) 40px
+    );
+  }
+  .hero-logo {
+    width: 56px; height: 56px;
+    background: white;
+    border-radius: 16px;
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.2);
+  }
+  .hero-logo img { height: 36px; }
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(22px, 5vw, 32px);
+    font-weight: 800;
+    color: white;
+    line-height: 1.2;
+    position: relative;
+  }
+  .hero p {
+    margin-top: 10px;
+    font-size: 15px;
+    color: rgba(255,255,255,.7);
+    max-width: 480px;
+    margin-inline: auto;
+    position: relative;
+  }
+  .hero-badge {
+    display: inline-block;
+    margin-top: 14px;
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.25);
+    color: rgba(255,255,255,.9);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 14px;
+    border-radius: 20px;
+    letter-spacing: .04em;
+    position: relative;
+  }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap {
+    background: white;
+    padding: 0 24px;
+    position: sticky; top: 0; z-index: 50;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08);
+  }
+  .progress-inner {
+    max-width: 680px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 14px 0;
+  }
+  .step-item {
+    display: flex; flex-direction: column; align-items: center;
+    flex: 1; position: relative; cursor: default;
+  }
+  .step-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 14px; left: 50%; right: -50%;
+    height: 2px;
+    background: var(--gray-200);
+    transition: background .3s;
+  }
+  .step-item.done:not(:last-child)::after { background: var(--green); }
+  .step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--gray-200);
+    background: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    color: var(--gray-400);
+    transition: .3s; z-index: 1;
+  }
+  .step-item.active .step-num  { border-color: var(--green); color: var(--green); background: var(--green-pale); }
+  .step-item.done .step-num    { border-color: var(--green); background: var(--green); color: white; }
+  .step-label {
+    font-size: 10px; font-weight: 600; color: var(--gray-400);
+    margin-top: 5px; text-align: center; white-space: nowrap;
+  }
+  .step-item.active .step-label { color: var(--green-dark); }
+  .step-item.done .step-label   { color: var(--green); }
+
+  /* ── MAIN LAYOUT ── */
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 32px 16px 64px;
+  }
+
+  /* ── SECTIONS ── */
+  .section {
+    display: none;
+    animation: fadeUp .35s ease;
+  }
+  .section.active { display: block; }
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(14px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 17px; font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-subtitle {
+    font-size: 13px; color: var(--gray-500);
+    margin-bottom: 24px; line-height: 1.5;
+  }
+
+  /* ── FORM ELEMENTS ── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 560px) { .form-grid { grid-template-columns: 1fr; } }
+  .span2 { grid-column: span 2; }
+  @media (max-width: 560px) { .span2 { grid-column: span 1; } }
+
+  .form-group { display: flex; flex-direction: column; }
+  .form-label {
+    font-size: 12px; font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 6px;
+    letter-spacing: .02em;
+  }
+  .form-label .req { color: var(--danger); }
+
+  .form-input, .form-select {
+    padding: 11px 14px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; color: var(--gray-900);
+    background: white;
+    outline: none; transition: .2s;
+    width: 100%;
+  }
+  .form-input:focus, .form-select:focus {
+    border-color: var(--green);
+    box-shadow: 0 0 0 3px rgba(84,160,69,.12);
+  }
+  .form-input.error { border-color: var(--danger); }
+  .form-hint { font-size: 11px; color: var(--gray-400); margin-top: 4px; }
+
+  /* ── FILE UPLOAD ── */
+  .upload-zone {
+    border: 2px dashed var(--gray-200);
+    border-radius: 10px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: .2s;
+    position: relative;
+  }
+  .upload-zone:hover { border-color: var(--green); background: var(--green-pale); }
+  .upload-zone input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer;
+  }
+  .upload-icon { font-size: 28px; margin-bottom: 8px; }
+  .upload-label {
+    font-size: 13px; font-weight: 600; color: var(--gray-700);
+    display: block; margin-bottom: 4px;
+  }
+  .upload-hint { font-size: 11px; color: var(--gray-400); }
+  .upload-list { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .upload-item {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--green-pale); border-radius: 7px;
+    padding: 8px 12px; font-size: 12px;
+  }
+  .upload-item .fname { flex:1; color: var(--green-dark); font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .upload-item .fsize { color: var(--gray-400); flex-shrink:0; }
+  .upload-item .rm-btn { cursor:pointer; color:var(--gray-400); font-size:16px; line-height:1; background:none; border:none; padding:0 2px; }
+  .upload-item .rm-btn:hover { color: var(--danger); }
+  .upload-progress { height: 3px; background: var(--gray-100); border-radius: 3px; margin-top: 6px; overflow: hidden; }
+  .upload-progress-bar { height: 100%; background: var(--green); border-radius: 3px; transition: width .3s; }
+
+  /* ── BUTTONS ── */
+  .btn-row {
+    display: flex; gap: 12px; justify-content: space-between;
+    margin-top: 28px; flex-wrap: wrap;
+  }
+  .btn {
+    padding: 13px 28px; border-radius: 9px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer; border: none; transition: .2s;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .btn-primary {
+    background: var(--green); color: white;
+    box-shadow: 0 4px 12px rgba(84,160,69,.3);
+  }
+  .btn-primary:hover { background: var(--green-dark); transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+  .btn-ghost { background: var(--gray-100); color: var(--gray-700); }
+  .btn-ghost:hover { background: var(--gray-200); }
+
+  /* ── CPNJF LOOKUP ── */
+  .cnpj-wrap { display: flex; gap: 8px; }
+  .cnpj-wrap .form-input { flex: 1; }
+  .btn-lookup {
+    padding: 11px 14px; background: var(--gray-100);
+    border: 1.5px solid var(--gray-200); border-radius: 8px;
+    font-size: 12px; font-weight: 600; color: var(--gray-700);
+    cursor: pointer; white-space: nowrap; transition: .2s;
+  }
+  .btn-lookup:hover { background: var(--green-pale); border-color: var(--green); color: var(--green-dark); }
+
+  /* ── SUCCESS SCREEN ── */
+  #screen-success {
+    text-align: center; padding: 40px 0;
+  }
+  .success-icon {
+    width: 72px; height: 72px;
+    background: var(--green-pale);
+    border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 34px; margin-bottom: 20px;
+  }
+  .success-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 24px; font-weight: 800;
+    color: var(--green-dark); margin-bottom: 10px;
+  }
+  .success-text {
+    font-size: 14px; color: var(--gray-500);
+    max-width: 420px; margin: 0 auto; line-height: 1.6;
+  }
+  .success-list {
+    margin: 24px auto; max-width: 340px;
+    background: var(--gray-50); border-radius: 10px; padding: 16px 20px;
+    text-align: left; font-size: 13px; line-height: 2; color: var(--gray-700);
+  }
+
+  /* ── ALERTS ── */
+  .alert {
+    padding: 12px 16px; border-radius: 8px;
+    font-size: 13px; font-weight: 500;
+    margin-bottom: 16px; display: none;
+  }
+  .alert.error   { background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5; }
+  .alert.success { background: var(--green-pale); color: var(--green-dark); border: 1px solid var(--green-light); }
+  .alert.show { display: block; }
+
+  /* ── SUBMITTING ── */
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2.5px solid rgba(255,255,255,.4);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── MISC ── */
+  .divider {
+    height: 1px; background: var(--gray-100);
+    margin: 20px 0;
+  }
+  .required-note {
+    font-size: 12px; color: var(--gray-400);
+    margin-bottom: 16px;
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-logo">
+    <!-- Substitua pelo logo real: <img src="logo.png" alt="Cabana Burger"> -->
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#54a045" stroke-width="2.5">
+      <path d="M3 12h18M3 6h18M3 18h18"/>
+    </svg>
+  </div>
+  <h1>Cadastro de Prestador PJ</h1>
+  <p>Preencha as informações abaixo para concluir seu cadastro na Cabana Burger.</p>
+  <span class="hero-badge">🔒 Dados protegidos · Uso interno</span>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-wrap">
+  <div class="progress-inner">
+    <div class="step-item active" id="step-1">
+      <div class="step-num">1</div>
+      <div class="step-label">Pessoal</div>
+    </div>
+    <div class="step-item" id="step-2">
+      <div class="step-num">2</div>
+      <div class="step-label">Empresa PJ</div>
+    </div>
+    <div class="step-item" id="step-3">
+      <div class="step-num">3</div>
+      <div class="step-label">Bancário</div>
+    </div>
+    <div class="step-item" id="step-4">
+      <div class="step-num">4</div>
+      <div class="step-label">Documentos</div>
+    </div>
+  </div>
+</div>
+
+<!-- FORM -->
+<div class="container">
+  <div class="alert error" id="alert-error"></div>
+
+  <!-- ── SEÇÃO 1: DADOS PESSOAIS ── -->
+  <div class="section active" id="section-1">
+    <div class="card">
+      <div class="card-title">👤 Dados Pessoais</div>
+      <div class="card-subtitle">Informações pessoais do prestador de serviço.</div>
+      <div class="required-note">Campos com <span style="color:var(--danger)">*</span> são obrigatórios.</div>
+
+      <div class="form-grid">
+        <div class="form-group span2">
+          <label class="form-label">Nome Completo <span class="req">*</span></label>
+          <input class="form-input" id="f-nome" type="text" placeholder="Seu nome completo" autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">CPF <span class="req">*</span></label>
+          <input class="form-input" id="f-cpf" type="text" placeholder="000.000.000-00" maxlength="14" oninput="maskCPF(this)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Data de Nascimento <span class="req">*</span></label>
+          <input class="form-input" id="f-nascimento" type="text" placeholder="DD/MM/AAAA" maxlength="10" oninput="maskDate(this)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sexo <span class="req">*</span></label>
+          <select class="form-select" id="f-sexo">
+            <option value="">Selecione...</option>
+            <option>Masculino</option>
+            <option>Feminino</option>
+            <option>Outro / Prefiro não informar</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Telefone / WhatsApp <span class="req">*</span></label>
+          <input class="form-input" id="f-telefone" type="tel" placeholder="(11) 99999-9999" maxlength="15" oninput="maskPhone(this)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">E-mail Pessoal <span class="req">*</span></label>
+          <input class="form-input" id="f-email" type="email" placeholder="seuemail@gmail.com" autocomplete="email">
+        </div>
+        <div class="form-group span2">
+          <label class="form-label">Endereço Completo <span class="req">*</span></label>
+          <input class="form-input" id="f-endereco" type="text" placeholder="Rua, número, bairro, cidade – UF">
+        </div>
+        <div class="form-group">
+          <label class="form-label">CEP</label>
+          <input class="form-input" id="f-cep" type="text" placeholder="00000-000" maxlength="9" oninput="maskCEP(this)">
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <span></span>
+      <button class="btn btn-primary" onclick="goToSection(2)">
+        Próximo <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── SEÇÃO 2: EMPRESA PJ ── -->
+  <div class="section" id="section-2">
+    <div class="card">
+      <div class="card-title">🏢 Dados da Empresa PJ</div>
+      <div class="card-subtitle">Informações da sua pessoa jurídica para emissão de notas fiscais e contrato.</div>
+
+      <div class="form-grid">
+        <div class="form-group span2">
+          <label class="form-label">CNPJ <span class="req">*</span></label>
+          <div class="cnpj-wrap">
+            <input class="form-input" id="f-cnpj" type="text" placeholder="00.000.000/0001-00" maxlength="18" oninput="maskCNPJ(this)">
+            <button class="btn-lookup" type="button" onclick="buscarCNPJ()">🔍 Consultar</button>
+          </div>
+          <span class="form-hint">Clique em Consultar para preencher automaticamente pelo CNPJ.</span>
+        </div>
+        <div class="form-group span2">
+          <label class="form-label">Razão Social <span class="req">*</span></label>
+          <input class="form-input" id="f-razao" type="text" placeholder="Nome da empresa conforme cartão CNPJ">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Data de Abertura <span class="req">*</span></label>
+          <input class="form-input" id="f-abertura" type="text" placeholder="DD/MM/AAAA" maxlength="10" oninput="maskDate(this)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">CNPJ completa 6 meses em</label>
+          <input class="form-input" id="f-seis-meses" type="text" placeholder="DD/MM/AAAA" maxlength="10" oninput="maskDate(this)" readonly style="background:var(--gray-50)">
+          <span class="form-hint">Calculado automaticamente.</span>
+        </div>
+        <div class="form-group span2">
+          <label class="form-label">Endereço da Empresa</label>
+          <input class="form-input" id="f-endereco-pj" type="text" placeholder="Endereço conforme cartão CNPJ">
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goToSection(1)">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Voltar
+      </button>
+      <button class="btn btn-primary" onclick="goToSection(3)">
+        Próximo <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── SEÇÃO 3: DADOS BANCÁRIOS ── -->
+  <div class="section" id="section-3">
+    <div class="card">
+      <div class="card-title">🏦 Dados Bancários</div>
+      <div class="card-subtitle">Para recebimento das notas fiscais. Utilize preferencialmente a conta PJ.</div>
+
+      <div class="form-grid">
+        <div class="form-group span2">
+          <label class="form-label">Chave PIX <span class="req">*</span></label>
+          <input class="form-input" id="f-pix" type="text" placeholder="CNPJ, CPF, e-mail ou chave aleatória">
+        </div>
+        <div class="form-group span2">
+          <label class="form-label">Banco <span class="req">*</span></label>
+          <input class="form-input" id="f-banco" type="text" list="banco-list" placeholder="Ex: Nubank, Itaú, Bradesco...">
+          <datalist id="banco-list">
+            <option>Nubank</option><option>Itaú</option><option>Bradesco</option>
+            <option>Santander</option><option>Banco do Brasil</option><option>Caixa</option>
+            <option>C6 Bank</option><option>Inter</option><option>BTG Pactual</option>
+            <option>Sicoob</option><option>XP Investimentos</option><option>Neon</option>
+          </datalist>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Agência</label>
+          <input class="form-input" id="f-agencia" type="text" placeholder="0000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Conta <span class="req">*</span></label>
+          <input class="form-input" id="f-conta" type="text" placeholder="00000000-0">
+        </div>
+        <div class="form-group span2">
+          <label class="form-label">Tipo de Conta</label>
+          <select class="form-select" id="f-tipo-conta">
+            <option>Conta Corrente PJ</option>
+            <option>Conta Corrente PF</option>
+            <option>Conta Pagamento (Nubank, C6, etc.)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goToSection(2)">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Voltar
+      </button>
+      <button class="btn btn-primary" onclick="goToSection(4)">
+        Próximo <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── SEÇÃO 4: DOCUMENTOS ── -->
+  <div class="section" id="section-4">
+    <div class="card">
+      <div class="card-title">📎 Documentos</div>
+      <div class="card-subtitle">Anexe os documentos necessários para concluir o cadastro. Formatos aceitos: PDF, JPG, PNG (máx. 10MB por arquivo).</div>
+
+      <!-- Cartão CNPJ -->
+      <div style="margin-bottom:24px;">
+        <label class="form-label">Cartão CNPJ <span class="req">*</span></label>
+        <div class="upload-zone" id="zone-cnpj" onclick="document.getElementById('file-cnpj').click()">
+          <input type="file" id="file-cnpj" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFile(this,'cnpj')">
+          <div class="upload-icon">🏢</div>
+          <span class="upload-label">Cartão CNPJ (Receita Federal)</span>
+          <span class="upload-hint">PDF ou imagem · máx. 10MB</span>
+        </div>
+        <div class="upload-list" id="list-cnpj"></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- RG ou CNH -->
+      <div style="margin-bottom:24px;">
+        <label class="form-label">RG ou CNH <span class="req">*</span></label>
+        <div class="upload-zone" id="zone-rg" onclick="document.getElementById('file-rg').click()">
+          <input type="file" id="file-rg" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFile(this,'rg')">
+          <div class="upload-icon">🪪</div>
+          <span class="upload-label">RG (frente e verso) ou CNH</span>
+          <span class="upload-hint">PDF ou imagem · máx. 10MB</span>
+        </div>
+        <div class="upload-list" id="list-rg"></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Comprovante de residência -->
+      <div>
+        <label class="form-label">Comprovante de Residência <span class="req">*</span></label>
+        <div class="upload-zone" id="zone-residencia" onclick="document.getElementById('file-residencia').click()">
+          <input type="file" id="file-residencia" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFile(this,'residencia')">
+          <div class="upload-icon">🏠</div>
+          <span class="upload-label">Conta de luz, água, gás ou telefone</span>
+          <span class="upload-hint">Emitido nos últimos 3 meses · máx. 10MB</span>
+        </div>
+        <div class="upload-list" id="list-residencia"></div>
+      </div>
+    </div>
+
+    <!-- TERMOS -->
+    <div class="card" style="padding:20px 28px;">
+      <label style="display:flex;gap:12px;cursor:pointer;align-items:flex-start;">
+        <input type="checkbox" id="f-termos" style="margin-top:3px;flex-shrink:0;accent-color:var(--green);width:16px;height:16px;">
+        <span style="font-size:13px;color:var(--gray-700);line-height:1.5;">
+          Declaro que as informações fornecidas são verdadeiras e autorizo o uso dos dados pessoais para fins de cadastro e contratação pela <strong>Cabana Burger</strong>, conforme a LGPD.
+        </span>
+      </label>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goToSection(3)">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Voltar
+      </button>
+      <button class="btn btn-primary" id="btn-submit" onclick="submitForm()">
+        <div class="spinner" id="spinner"></div>
+        <span id="submit-text">✅ Enviar Cadastro</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── SUCESSO ── -->
+  <div id="screen-success" style="display:none;">
+    <div class="card">
+      <div class="success-icon">✅</div>
+      <div class="success-title">Cadastro enviado!</div>
+      <div class="success-text">
+        Obrigado! Suas informações foram recebidas com sucesso pelo time de RH da Cabana Burger.
+      </div>
+      <div class="success-list">
+        ✅ Dados pessoais<br>
+        ✅ Empresa PJ<br>
+        ✅ Dados bancários<br>
+        ✅ Documentos anexados
+      </div>
+      <div class="success-text">
+        Em breve você receberá um contato pelo e-mail ou WhatsApp informado para os próximos passos.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── ESTADO ──
+const files = { cnpj: null, rg: null, residencia: null };
+let currentSection = 1;
+
+// ── NAVEGAÇÃO ──
+function goToSection(n) {
+  if(n > currentSection && !validateSection(currentSection)) return;
+
+  document.getElementById('section-'+currentSection).classList.remove('active');
+  document.getElementById('section-'+n).classList.add('active');
+
+  // Update progress
+  for(let i=1; i<=4; i++) {
+    const el = document.getElementById('step-'+i);
+    el.classList.remove('active','done');
+    if(i < n)  el.classList.add('done');
+    if(i === n) el.classList.add('active');
+  }
+
+  currentSection = n;
+  window.scrollTo({top:0, behavior:'smooth'});
+  hideAlert();
+}
+
+// ── VALIDAÇÃO POR SEÇÃO ──
+function validateSection(n) {
+  hideAlert();
+  if(n === 1) {
+    if(!v('f-nome'))      return err('Informe seu nome completo.');
+    if(!v('f-cpf'))       return err('Informe seu CPF.');
+    if(!v('f-nascimento'))return err('Informe sua data de nascimento.');
+    if(!v('f-sexo'))      return err('Selecione o sexo.');
+    if(!v('f-telefone'))  return err('Informe seu telefone/WhatsApp.');
+    if(!v('f-email'))     return err('Informe seu e-mail pessoal.');
+    if(!v('f-endereco'))  return err('Informe seu endereço completo.');
+  }
+  if(n === 2) {
+    if(!v('f-cnpj'))  return err('Informe o CNPJ da empresa.');
+    if(!v('f-razao')) return err('Informe a Razão Social.');
+    if(!v('f-abertura')) return err('Informe a data de abertura do CNPJ.');
+  }
+  if(n === 3) {
+    if(!v('f-pix'))   return err('Informe a chave PIX.');
+    if(!v('f-banco')) return err('Informe o banco.');
+    if(!v('f-conta')) return err('Informe o número da conta.');
+  }
+  return true;
+}
+
+function v(id) { return document.getElementById(id)?.value?.trim(); }
+function err(msg) {
+  const el = document.getElementById('alert-error');
+  el.textContent = '⚠️ ' + msg; el.classList.add('show');
+  window.scrollTo({top:0, behavior:'smooth'});
+  return false;
+}
+function hideAlert() {
+  document.getElementById('alert-error').classList.remove('show');
+}
+
+// ── ARQUIVO UPLOAD (client-side preview) ──
+function handleFile(input, key) {
+  const file = input.files[0]; if(!file) return;
+  if(file.size > 10 * 1024 * 1024) {
+    alert('⚠️ Arquivo muito grande. Máximo 10MB.'); input.value=''; return;
+  }
+  files[key] = file;
+  renderFileItem(key, file);
+}
+
+function renderFileItem(key, file) {
+  const list = document.getElementById('list-'+key);
+  list.innerHTML = '';
+  const size = file.size > 1024*1024
+    ? (file.size/(1024*1024)).toFixed(1)+' MB'
+    : Math.round(file.size/1024)+' KB';
+  const item = document.createElement('div');
+  item.className = 'upload-item';
+  item.innerHTML = `
+    <span>📄</span>
+    <span class="fname">${file.name}</span>
+    <span class="fsize">${size}</span>
+    <button class="rm-btn" onclick="removeFile('${key}')">✕</button>`;
+  list.appendChild(item);
+  // Visual feedback on zone
+  document.getElementById('zone-'+key).style.borderColor = 'var(--green)';
+  document.getElementById('zone-'+key).style.background = 'var(--green-pale)';
+}
+
+function removeFile(key) {
+  files[key] = null;
+  document.getElementById('list-'+key).innerHTML = '';
+  document.getElementById('file-'+key).value = '';
+  document.getElementById('zone-'+key).style.borderColor = '';
+  document.getElementById('zone-'+key).style.background = '';
+}
+
+// ── SUBMIT ──
+async function submitForm() {
+  hideAlert();
+  if(!validateSection(4)) return;
+
+  // Check docs
+  if(!files.cnpj)      return err('Anexe o Cartão CNPJ.');
+  if(!files.rg)        return err('Anexe o RG ou CNH.');
+  if(!files.residencia)return err('Anexe o comprovante de residência.');
+  if(!document.getElementById('f-termos').checked)
+    return err('Você precisa aceitar os termos para continuar.');
+
+  // Loading state
+  const btn = document.getElementById('btn-submit');
+  document.getElementById('spinner').style.display = 'block';
+  document.getElementById('submit-text').textContent = 'Enviando...';
+  btn.disabled = true;
+
+  try {
+    // 1. Upload files to Cloudinary (free tier)
+    // ⚠️ INSTRUÇÃO: Substitua 'SEU_CLOUD_NAME' pelo seu cloud name do Cloudinary
+    // e 'SEU_UPLOAD_PRESET' pelo unsigned upload preset que você criar
+    const CLOUD_NAME    = 'SEU_CLOUD_NAME';
+    const UPLOAD_PRESET = 'SEU_UPLOAD_PRESET';
+
+    const fileUrls = {};
+    for(const [key, file] of Object.entries(files)) {
+      if(!file) continue;
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('upload_preset', UPLOAD_PRESET);
+      fd.append('folder', 'cabana_burger_onboarding');
+      fd.append('public_id', `${Date.now()}_${key}_${v('f-nome').replace(/\s+/g,'_')}`);
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {method:'POST', body:fd});
+      const data = await res.json();
+      if(data.error) throw new Error('Erro no upload: ' + data.error.message);
+      fileUrls[key] = data.secure_url;
+    }
+
+    // 2. Send form data via FormSubmit
+    // ⚠️ INSTRUÇÃO: Substitua 'SEU_EMAIL@empresa.com' pelo e-mail que receberá os cadastros
+    const EMAIL_DESTINO = 'SEU_EMAIL@empresa.com';
+
+    const formData = new FormData();
+    formData.append('_subject', '🆕 Novo Cadastro PJ — ' + v('f-nome'));
+    formData.append('_template', 'table');
+    formData.append('_captcha', 'false');
+    formData.append('_autoresponse', 'Olá! Recebemos seu cadastro e em breve entraremos em contato. Atenciosamente, Time RH Cabana Burger.');
+    formData.append('_replyto', v('f-email'));
+
+    // Dados pessoais
+    formData.append('Nome Completo', v('f-nome'));
+    formData.append('CPF', v('f-cpf'));
+    formData.append('Data de Nascimento', v('f-nascimento'));
+    formData.append('Sexo', v('f-sexo'));
+    formData.append('Telefone WhatsApp', v('f-telefone'));
+    formData.append('E-mail Pessoal', v('f-email'));
+    formData.append('Endereço', v('f-endereco'));
+    formData.append('CEP', v('f-cep') || '—');
+    // Empresa PJ
+    formData.append('CNPJ', v('f-cnpj'));
+    formData.append('Razão Social', v('f-razao'));
+    formData.append('Abertura CNPJ', v('f-abertura'));
+    formData.append('6 Meses CNPJ', v('f-seis-meses') || '—');
+    formData.append('Endereço PJ', v('f-endereco-pj') || '—');
+    // Bancário
+    formData.append('Chave PIX', v('f-pix'));
+    formData.append('Banco', v('f-banco'));
+    formData.append('Agência', v('f-agencia') || '—');
+    formData.append('Conta', v('f-conta'));
+    formData.append('Tipo de Conta', v('f-tipo-conta'));
+    // Documentos
+    formData.append('Cartão CNPJ (link)', fileUrls.cnpj || '—');
+    formData.append('RG ou CNH (link)', fileUrls.rg || '—');
+    formData.append('Comprovante Residência (link)', fileUrls.residencia || '—');
+
+    const resp = await fetch(`https://formsubmit.co/${EMAIL_DESTINO}`, {method:'POST', body: formData});
+    if(!resp.ok) throw new Error('Falha no envio do formulário.');
+
+    // Sucesso
+    document.getElementById('section-4').style.display = 'none';
+    document.getElementById('screen-success').style.display = 'block';
+    window.scrollTo({top:0, behavior:'smooth'});
+
+  } catch(e) {
+    err('Erro ao enviar: ' + e.message + '. Tente novamente ou entre em contato com o RH.');
+    document.getElementById('spinner').style.display = 'none';
+    document.getElementById('submit-text').textContent = '✅ Enviar Cadastro';
+    btn.disabled = false;
+  }
+}
+
+// ── MÁSCARAS ──
+function maskCPF(el) {
+  let v = el.value.replace(/\D/g,'').slice(0,11);
+  v = v.replace(/(\d{3})(\d)/,'$1.$2');
+  v = v.replace(/(\d{3})(\d)/,'$1.$2');
+  v = v.replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+  el.value = v;
+}
+function maskCNPJ(el) {
+  let v = el.value.replace(/\D/g,'').slice(0,14);
+  v = v.replace(/(\d{2})(\d)/,'$1.$2');
+  v = v.replace(/(\d{3})(\d)/,'$1.$2');
+  v = v.replace(/(\d{3})(\d)/,'$1/$2');
+  v = v.replace(/(\d{4})(\d{1,2})$/,'$1-$2');
+  el.value = v;
+  // Auto-calc 6 months
+  const ab = document.getElementById('f-abertura').value;
+  calcSeisMeses(ab);
+}
+function maskDate(el) {
+  let v = el.value.replace(/\D/g,'').slice(0,8);
+  v = v.replace(/(\d{2})(\d)/,'$1/$2');
+  v = v.replace(/(\d{2})(\d)/,'$1/$2');
+  el.value = v;
+  if(el.id === 'f-abertura') calcSeisMeses(v);
+}
+function maskPhone(el) {
+  let v = el.value.replace(/\D/g,'').slice(0,11);
+  if(v.length <= 10) v = v.replace(/(\d{2})(\d{4})(\d{0,4})/,'($1) $2-$3');
+  else              v = v.replace(/(\d{2})(\d{5})(\d{0,4})/,'($1) $2-$3');
+  el.value = v.replace(/-$/,'');
+}
+function maskCEP(el) {
+  let v = el.value.replace(/\D/g,'').slice(0,8);
+  el.value = v.replace(/(\d{5})(\d)/,'$1-$2');
+}
+
+function calcSeisMeses(dateStr) {
+  const parts = dateStr.split('/');
+  if(parts.length !== 3 || parts[2].length !== 4) return;
+  const d = new Date(+parts[2], +parts[1]-1, +parts[0]);
+  if(isNaN(d)) return;
+  d.setMonth(d.getMonth()+6);
+  const dd = ('0'+d.getDate()).slice(-2);
+  const mm = ('0'+(d.getMonth()+1)).slice(-2);
+  document.getElementById('f-seis-meses').value = dd+'/'+mm+'/'+d.getFullYear();
+}
+
+// ── CONSULTA CNPJ (API pública) ──
+async function buscarCNPJ() {
+  const cnpj = v('f-cnpj').replace(/\D/g,'');
+  if(cnpj.length !== 14) { alert('Informe um CNPJ válido com 14 dígitos.'); return; }
+  try {
+    const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`);
+    if(!res.ok) throw new Error('CNPJ não encontrado.');
+    const d = await res.json();
+    document.getElementById('f-razao').value = d.razao_social || '';
+    const ab = d.data_inicio_atividade;
+    if(ab) {
+      // Format YYYY-MM-DD to DD/MM/YYYY
+      const parts = ab.split('-');
+      const fmt = parts[2]+'/'+parts[1]+'/'+parts[0];
+      document.getElementById('f-abertura').value = fmt;
+      calcSeisMeses(fmt);
+    }
+    const logradouro = [d.logradouro, d.numero, d.bairro, d.municipio, d.uf].filter(Boolean).join(', ');
+    if(logradouro) document.getElementById('f-endereco-pj').value = logradouro;
+    alert('✅ Dados preenchidos automaticamente pelo CNPJ!');
+  } catch(e) {
+    alert('⚠️ Não foi possível consultar o CNPJ: ' + e.message);
+  }
+}
+</script>
+</body>
+</html>
